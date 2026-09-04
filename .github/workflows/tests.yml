@@ -1,0 +1,49 @@
+name: Homebrew Tap
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  formula:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-14
+          - ubuntu-24.04
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout tap
+        uses: actions/checkout@v4
+
+      - name: Update Homebrew
+        run: brew update
+
+      - name: Tap this checkout
+        run: brew tap kleopadre/tap "$PWD"
+
+      - name: Trust formula
+        run: brew trust --formula kleopadre/tap/wispwire
+
+      - name: Style formula
+        run: brew style --formula kleopadre/tap/wispwire
+
+      - name: Audit formula
+        run: brew audit --strict --new --online --formula kleopadre/tap/wispwire
+
+      - name: Install formula
+        run: HOMEBREW_NO_INSTALL_CLEANUP=1 brew install --build-from-source kleopadre/tap/wispwire
+
+      - name: Test formula
+        run: brew test kleopadre/tap/wispwire
+
+      - name: Installed CLI smoke
+        run: |
+          wispwire --help
+          wispwire doctor
+          wispwire open --help
+          wispwire capture --help
